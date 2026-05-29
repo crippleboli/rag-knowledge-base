@@ -12,18 +12,19 @@ from app.shared.config.minio_config import minio_config, MinIOConfig
 from app.shared.config.reranker_config import reranker_config, RerankerConfig
 from app.shared.config.settings_config import settings, AppSettings
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
 
 @dataclass
 class InfrastructureConfig:
-    app: AppSettings = settings
-    llm: LLMConfig = lm_config
-    embedding: EmbeddingConfig = embedding_config
-    reranker: RerankerConfig = reranker_config
-    mcp: McpConfig = mcp_config
-    milvus: MilvusConfig = milvus_config
-    mineru: MinerUConfig = mineru_config
-    minio: MinIOConfig = minio_config
+    app: AppSettings = field(default_factory=lambda :  settings)
+    llm: LLMConfig = field(default_factory=lambda: lm_config)
+    embedding: EmbeddingConfig = field(default_factory=lambda: embedding_config)
+    reranker: RerankerConfig = field(default_factory=lambda: reranker_config)
+    mcp: McpConfig = field(default_factory=lambda: mcp_config)
+    milvus: MilvusConfig = field(default_factory=lambda: milvus_config)
+    mineru: MinerUConfig = field(default_factory=lambda: mineru_config)
+    minio: MinIOConfig = field(default_factory=lambda: minio_config)
 
 
 infra_config = InfrastructureConfig()
