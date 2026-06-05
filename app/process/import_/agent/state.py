@@ -14,13 +14,13 @@ class ImportGraphState(TypedDict):
 
     # 地址路径内容
     local_file_path : str
-    local_dir : str
-    md_path : str
-    pdf_path : str
+    local_dir : str     # 输出文件路径
+    md_path : str       # md 输入文件路径
+    pdf_path : str      # pdf 输入文件路径
     file_title : str
 
     # 文本和切块内容
-    md_content: str
+    md_content: str     # Markdown 文本内容
     item_name : str
     chunks : list
     embeddings_content : list

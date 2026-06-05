@@ -3,7 +3,6 @@
 """
 from langchain_core.exceptions import LangChainException
 from langchain_openai import ChatOpenAI
-
 from app.shared.config.lm_config import lm_config
 from app.shared.runtime.logger import logger
 
@@ -54,12 +53,12 @@ def get_llm_client(model: str | None = None, json_mode: bool = False) -> ChatOpe
     # 5. 客户端初始化：捕获LangChain封装层异常，抛出更友好的提示
     try:
         llm_client = ChatOpenAI(
-            model=target_model,  # 目标模型名
+            model=target_model,             # 目标模型名
             temperature=lm_config.llm_temperature or _DEFAULT_TEMPERATURE,  # 低温度保证输出确定性（0~1）
-            api_key=lm_config.api_key,  # API密钥
-            base_url=lm_config.base_url,  # API基础地址（适配国产模型代理地址）
-            extra_body=extra_body,  # 国产模型私有参数透传
-            model_kwargs=model_kwargs,  # OpenAI通用参数
+            api_key=lm_config.api_key,      # API密钥
+            base_url=lm_config.base_url,    # API基础地址（适配国产模型代理地址）
+            extra_body=extra_body,          # 国产模型提供参数
+            model_kwargs=model_kwargs,      # OPENAI提供的标准参数
         )
     except LangChainException as e:
         raise Exception(f"[LLM客户端] 模型【{target_model}】初始化失败（LangChain层）：{str(e)}") from e
@@ -69,4 +68,3 @@ def get_llm_client(model: str | None = None, json_mode: bool = False) -> ChatOpe
     logger.info(f"[LLM客户端] 实例初始化成功并缓存：模型={target_model}，JSON模式={json_mode}")
 
     return llm_client
-
