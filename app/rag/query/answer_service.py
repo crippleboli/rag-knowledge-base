@@ -21,25 +21,36 @@ def generate_answer(state: QueryGraphState) -> QueryGraphState:
 
     session_id = state["session_id"]
     is_stream = state.get("is_stream", True)
-    base_answer = state.get("answer") or f"这是关于「{state.get('original_query', '当前问题')}」的测试回答，正在演示打字机流式输出效果。"
+    base_answer = state.get("answer") or f"这是关于「{state.get('original_query', '当前问题')}」的测试回答，正在演示打字机流式输出效果。今天是个大晴天!天气非常好!晚上要[跑20公里!哈哈哈哈 你跑!阿斯卡等哈时间跨度哈市登记卡哈受打击看哈手机打卡萨哈久啊回到家卡仕达酱卡受打击阿莎扩大阿德手机哈时间跨度哈市登记卡花洒登记卡哈萨阿贾克斯等哈数据库打火机啊苏卡达合计阿萨达哈"
     final_text = ""
 
     if is_stream:
         for ch in base_answer:
             final_text += ch
+            # pust_to_session see (session_id ,delta , {delta:ch})
             push_to_session(session_id, SSEEvent.DELTA, {"delta": ch})
-            time.sleep(0.03)
+            time.sleep(0.06)
 
-        image_urls = ["https://example.com/demo-1.png", "https://example.com/demo-2.png"]
-        push_to_session(
-            session_id,
-            SSEEvent.FINAL,
-            {
-                "answer": final_text,
-                "status": "completed",
-                "image_urls": image_urls
-            }
-        )
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
+        time.sleep(0.66)
         logger.info(f"流式输出完成，总长度: {len(final_text)}")
     else:
         final_text = base_answer
