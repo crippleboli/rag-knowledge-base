@@ -79,9 +79,12 @@ async def sse_generator(session_id: str, request: Request):
                 break
 
             try:
+                # from concurrent.futures import ThreadPoolExecutor
+                # executor = ThreadPoolExecutor(max_workers=10)
                 # 使用 run_in_executor 避免阻塞 async 事件循环
                 # {event:"process" : data: {任务状态 / 已完成节点 / 进行中节点}}
                 msg = await loop.run_in_executor(None, stream_queue.get, True, 1.0)
+                stream_queue.get()
             except queue.Empty:
                 # print(f"[SSE] Queue empty for {session_id}, waiting...")
                 continue
