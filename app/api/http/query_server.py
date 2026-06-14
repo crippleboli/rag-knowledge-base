@@ -35,9 +35,9 @@ app = FastAPI(
 # 跨域处理
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = ['*'],
-    allow_methods = ['*'],
-    allow_headers = ['*']
+    allow_origins = ['*'], # 198.1.1.1 , 192.168.1.1
+    allow_methods = ['*'], # get post  put ...
+    allow_headers = ['*']  # content-type ...
 )
 
 # 1. 返回chat对应的页面
@@ -90,17 +90,16 @@ def invoke_query_graph(session_id:str,query:str,is_stream:bool=False):
         logger.info(f"执行结束,执行结果为:{result_state}")
         update_task_status(session_id,TASK_STATUS_COMPLETED,is_stream)
 
-        image_urls = ["http://www.baidu.com/img/bd_logo.png",
-                      "https://gips3.baidu.com/it/u=1821127123,1149655687&fm=3028&app=3028&f=JPEG&fmt=auto?w=720&h=1280"]
-        push_to_session(
-            session_id,
-            SSEEvent.FINAL,  # 显示图片
-            {
-                "answer": result_state['answer'],
-                "status": "completed",
-                "image_urls": image_urls
-            }
-        )
+        if is_stream:
+            push_to_session(
+                session_id,
+                SSEEvent.FINAL,  # 显示图片
+                {
+                    "answer": result_state['answer'],
+                    "status": "completed",
+                    "image_urls": result_state.get("image_urls",[])
+                }
+            )
         # 返回结果! 非流式需要
         return result_state
     except Exception as e:
@@ -150,7 +149,7 @@ def query(backgroundtasks:BackgroundTasks,request:QueryRequestParam):
             session_id=session_id,
             answer=final_state.get("answer"),
             done_list=get_done_task_list(session_id),
-            image_urls=final_state.get("image_urls")
+            image_urls=final_state.get("image_urls",[])
         )
 
 

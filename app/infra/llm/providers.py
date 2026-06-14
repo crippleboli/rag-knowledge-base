@@ -28,4 +28,8 @@ class LLMProvider:
         """
         return generate_embeddings(documents)
 
+    def reranker_model(self):
+        return get_reranker_model()
+
+
 llm_provider  = LLMProvider()   # 实例化

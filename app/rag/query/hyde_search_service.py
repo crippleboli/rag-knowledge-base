@@ -8,7 +8,7 @@ from app.infra.llm.providers import llm_provider
 from app.infra.vectorstore.milvus_gateway import milvus_gateway
 from app.infra.llm.providers import llm_provider
 
-
+@step_log("get_data_and_validates")
 def get_data_and_validates(state:QueryGraphState) -> tuple[str,list[str]]:
     """
     获取参数和校验
@@ -18,13 +18,13 @@ def get_data_and_validates(state:QueryGraphState) -> tuple[str,list[str]]:
     rewritten_query = state.get("rewritten_query")
     item_names = state.get("item_names",[])
 
-    if not rewritten_query or not len(item_names) == 0:
+    if not rewritten_query or len(item_names) == 0:
         logger.error(f"重写问题或者关联的主体为空,无法继续业务!")
         raise ValueError(f"重写问题或者关联的主体为空,无法继续业务!")
 
     return rewritten_query,item_names
 
-
+@step_log("milvus_search_hyde_entity")
 def milvus_search_hyde_entity(hyde_answer:str,rewritten_query:str, item_names:list[str]):
     """
       使用重写问题,对向量库进行搜索!
@@ -60,7 +60,7 @@ def milvus_search_hyde_entity(hyde_answer:str,rewritten_query:str, item_names:li
     # 4. 返回第一层结果
     return milvus_result[0]  if milvus_result and len(milvus_result) > 0 else []
 
-
+@step_log("normalize_retrieved_chunk")
 def normalize_retrieved_chunk(milvus_response: list[dict]) -> list[dict]:
     final_list_dict = []
     for milvus_dict in milvus_response:
@@ -83,7 +83,7 @@ def normalize_retrieved_chunk(milvus_response: list[dict]) -> list[dict]:
         )
     return final_list_dict
 
-
+@step_log("call_llm_by_rewritten_query")
 def call_llm_by_rewritten_query(rewritten_query) -> str:
     """
       调用模型生成假设性答案
@@ -105,7 +105,7 @@ def call_llm_by_rewritten_query(rewritten_query) -> str:
     return hyde_answer
 
 
-
+@step_log("search_by_hyde")
 def search_by_hyde(state: QueryGraphState):
     """
     向量检索服务：

@@ -3,7 +3,7 @@ from app.shared.runtime.logger import logger,step_log
 from app.infra.llm.providers import llm_provider
 from app.infra.vectorstore.milvus_gateway import milvus_gateway
 
-
+@step_log("get_data_and_validates")
 def get_data_and_validates(state:QueryGraphState) -> tuple[str,list[str]]:
     """
     获取参数和校验
@@ -13,13 +13,13 @@ def get_data_and_validates(state:QueryGraphState) -> tuple[str,list[str]]:
     rewritten_query = state.get("rewritten_query")
     item_names = state.get("item_names",[])
 
-    if not rewritten_query or not len(item_names) == 0:
+    if not rewritten_query or len(item_names) == 0:
         logger.error(f"重写问题或者关联的主体为空,无法继续业务!")
         raise ValueError(f"重写问题或者关联的主体为空,无法继续业务!")
 
     return rewritten_query,item_names
 
-
+@step_log("milvus_search_entity")
 def milvus_search_entity(rewritten_query, item_names):
     """
       使用重写问题,对向量库进行搜索!
@@ -34,6 +34,8 @@ def milvus_search_entity(rewritten_query, item_names):
     sparse_vector = embedding_result['sparse'][0]
     # 2. 创建annSearchRequest
     ann_reqs = milvus_gateway.create_requests(dense_vector=dense_vector,
+                                              #  item_name in ['xx','xxx','xxx']
+                                              #  item_name in [1,2,3,4]
                                    sparse_vector=sparse_vector,expr= f"item_name in {item_names}",limit=5*2)
     # 3. 调用混合检索(设置输出列)
     milvus_result = milvus_gateway.hybrid_search(
@@ -55,7 +57,7 @@ def milvus_search_entity(rewritten_query, item_names):
     # 4. 返回第一层结果
     return milvus_result[0]  if milvus_result and len(milvus_result) > 0 else []
 
-
+@step_log("normalize_retrieved_chunk")
 def normalize_retrieved_chunk(milvus_response: list[dict]) -> list[dict]:
     final_list_dict = []
     for milvus_dict in milvus_response:
@@ -79,7 +81,7 @@ def normalize_retrieved_chunk(milvus_response: list[dict]) -> list[dict]:
     return final_list_dict
 
 
-
+@step_log("search_by_embedding")
 def search_by_embedding(state: QueryGraphState):
     """
     向量检索服务：
