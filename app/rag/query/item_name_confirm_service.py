@@ -40,7 +40,8 @@ def get_history_messages(session_id: str, limit: int = 10) -> list[dict]:
     history_message_list = history_repository.list_recent(session_id=session_id, limit=limit)
     logger.info(f"查询历史记录数量:{len(history_message_list)}")
     # 有效校验
-    final_message_list = [item for item in history_message_list if item["item_names"] and len(item['item_names']) > 0]
+    final_message_list = [item for item in history_message_list if
+                          item.get("item_names") and len(item.get('item_names')) > 0]
     logger.info(f"校验后历史记录数量:{len(final_message_list)}")
     return final_message_list
 
