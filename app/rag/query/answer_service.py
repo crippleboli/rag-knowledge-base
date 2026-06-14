@@ -31,12 +31,6 @@ def generate_answer(state: QueryGraphState) -> QueryGraphState:
             # pust_to_session see (session_id ,delta , {delta:ch})
             push_to_session(session_id, SSEEvent.DELTA, {"delta": ch})
             time.sleep(0.06)
-
-        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
-        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
-        push_to_session(session_id, SSEEvent.DELTA, {"delta": "哈哈哈"})
-
-        time.sleep(0.66)
         logger.info(f"流式输出完成，总长度: {len(final_text)}")
     else:
         final_text = base_answer
@@ -50,8 +44,4 @@ def generate_answer(state: QueryGraphState) -> QueryGraphState:
     add_done_task(state['session_id'], sys._getframe().f_code.co_name, state.get("is_stream"))
     print("---node_answer_output 节点处理结束---")
     # 关键点：return 必须保留 session_id！
-    return {
-        "session_id": session_id,  # 必须带回去
-        "answer": "你的回答内容",
-        "is_stream": state.get("is_stream")
-    }
+    return state

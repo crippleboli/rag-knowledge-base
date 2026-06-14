@@ -31,7 +31,7 @@ class HistoryItemResponse(BaseModel):
     text:str
     rewritten_query:str
     item_names:list
-    image_urls:list
+    image_urls:list | None
     ts:Any
 
 class HistoryResponse(BaseModel):
