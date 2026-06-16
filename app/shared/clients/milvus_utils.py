@@ -58,8 +58,7 @@ def create_hybrid_search_requests(dense_vector, sparse_vector, dense_params=None
         data=[dense_vector], # 我们要搜索的数据   item - embedding - 稠密向量
         anns_field="dense_vector", # 搜索哪一列
         param=dense_params,  # 相识度比较 cosine
-        expr=expr, # 混合搜索的过滤条件   item_name in item_names  前置条件! 过滤出一批!  再比相识度早!
-        # search 单列搜索 过滤条件 filter =
+        expr=expr, # 混合搜索的过滤条件   item_name in item_names
         limit=limit # 当前路搜索的数量   5 * 2 = 10
     )
 

@@ -1,0 +1,50 @@
+
+
+整体流程:
+1. 数据校验
+2. 获取 10 条 有效的历史记录 有效指的是 有 item_names
+   由 5 条用户提问 和 5 条模型历史回答组成
+   结果是一个字典组成的列表  其中字典包含的键 在 mongo_history_utils中函数save_chat_message定义
+   [
+        {
+            "_id": ObjectId("6653a1b2c4d5e6f7a1234567"), # MongoDB自动生成的二进制唯一标识
+            "session_id": "000015_hybrid",               # 会话唯一标识
+            "role": "user",                             # 角色: user 或 assistant
+            "text": "这个万用表怎么换电池？",                # 原始对话内容
+            "rewritten_query": "混合万用表 更换电池的操作步骤",# 重写后的查询语句（可能为空字符串 ""）
+            "item_names": ["混合万用表"],                 # 关联的商品名称列表（可能为 None 或空列表 []）
+            "image_urls": None,                         # 关联的图片URL列表（可能为 None）
+            "ts": 1716769400.0                          # 消息写入时的时间戳（秒级 float）
+        },
+        {
+            ...
+        }
+    ]
+3. 根据 字典列表 循环拼接 本次提问的上下文
+   其中需要对类型进行区分
+   结果是一个 字符串
+4. 根据历史记录字符串 和 本次提问问题 调用大模型进行 主体识别 和 用户问题重写
+   返回结构是 json
+   {{
+      "item_names": ["商品A", "商品B"],
+      "rewritten_query": "关于商品A和商品B，..."
+   }}
+5. 对json中的item_names 结合实际的milvus数据库进行循环校验
+   传入 ["商品A", "商品B"] 循环取得单个itemname 后先对其使用BGE-M3进行向量化
+   根据 milvus 库检索 存储过的 itemnames集合
+   参考 https://milvus.io/docs/zh/single-vector-search.md文档中的 基本搜索和混合搜索
+   获取相似度最高的5个
+   对于每个 itemname  都有在库中相似度最高的5个 整理成 字典
+   {
+     "烫金机": [
+         {"item_name": "自动烫金机A型", "score": 0.85},
+         {"item_name": "手动精密烫金机", "score": 0.72}
+     ],
+     "雕刻机": [
+         {"item_name": "激光微型雕刻机", "score": 0.91},
+         {"item_name": "CNC数控雕刻机", "score": 0.68}
+     ]
+   }
+6. 根据分数 生成 确认列表 和 可选列表 确认[>0.7] 可选[0.6-0.7]
+7. 根据 确认列表和可选列表 中的数据数量 分情况更新state
+8. 保存本次用户提问的聊天记录

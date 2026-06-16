@@ -14,7 +14,7 @@ class MilvusGateway:
     def client(self):
         return get_milvus_client()
 
-    # 新引入
+
     def create_requests(
             self,
             dense_vector: list[float],
@@ -35,13 +35,13 @@ class MilvusGateway:
             *,
             collection_name: str,
             reqs: list[AnnSearchRequest],
-            ranker_weights: tuple[float, float] = (0.5, 0.5),
+            ranker_weights: tuple[float, float] = (0.5, 0.5),   # 默认权重
             norm_score: bool = False,
             limit: int = 5,
             output_fields: list[str] | None = None,
             search_params: dict | None = None,
     ):
-        return hybrid_search(
+        return hybrid_search(       # milvus_utils 中的函数
             client=self.client,
             collection_name=collection_name,
             reqs=reqs,
