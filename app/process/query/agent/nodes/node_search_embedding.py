@@ -1,6 +1,4 @@
 import sys
-import time
-
 from app.shared.runtime.logger import node_log
 from app.rag.query.embedding_search_service import search_by_embedding
 from app.shared.utils.task_utils import add_done_task, add_running_task
@@ -13,6 +11,17 @@ def node_search_embedding(state):
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
     embedding_chunks = search_by_embedding(state)
     add_done_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
+    # 与网络检索并行执行 所以采用增量更新的方式
     return {
         "embedding_chunks":embedding_chunks
     }
+
+if __name__ == "__main__":
+    test_state = {
+        "session_id": "test_search_embedding_001",
+        "rewritten_query": "HAK 180 烫金机使用说明",
+        "item_names": ["HAK 180 烫金机"],
+        "is_stream": False,
+    }
+    result = node_search_embedding(test_state)
+    print(result)

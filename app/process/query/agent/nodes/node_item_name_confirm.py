@@ -1,5 +1,4 @@
 import sys
-import time
 from app.shared.runtime.logger import node_log
 from app.rag.query.item_name_confirm_service import confirm_item_name
 from app.shared.utils.task_utils import add_done_task, add_running_task
@@ -7,7 +6,7 @@ from app.shared.utils.task_utils import add_done_task, add_running_task
 @node_log("node_item_name_confirm")
 def node_item_name_confirm(state):
     """
-    用于确认用户问题中的核心商品名称
+    节点功能: 用于确认用户问题中的核心商品名称 并同步对用户问题进行重写
     输入：state['original_query']
     输出：更新 state['item_names']
     """
