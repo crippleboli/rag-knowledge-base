@@ -93,6 +93,11 @@ def milvus_search_entity(rewritten_query, item_names):
 
 @step_log("normalize_retrieved_chunk")
 def normalize_retrieved_chunk(milvus_response: list[dict]) -> list[dict]:
+    """
+    整理混合检索结构 方便后续使用
+    :param milvus_response:
+    :return:
+    """
     final_list_dict = []
     for milvus_dict in milvus_response:
         # milvus_dict {id , distance , entity : {} }

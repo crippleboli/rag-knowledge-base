@@ -27,20 +27,20 @@ def get_data_and_validates(state:QueryGraphState) -> tuple[str,list[str]]:
 @step_log("milvus_search_hyde_entity")
 def milvus_search_hyde_entity(hyde_answer:str,rewritten_query:str, item_names:list[str]):
     """
-      使用重写问题,对向量库进行搜索!
-      注意: 需要添加item_name的过滤条件
+      使用重写问题对向量库进行搜索
+      需要添加item_name的过滤条件
     :param rewritten_query:
     :param item_names:
     :return: 返回处理一层后的列表
     """
-    # 1. 重写问题生成向量
+    # 1. 调用BGE-M3对 重写问题 + 假设性回答 进行向量化
     embedding_result = llm_provider.embed_documents([rewritten_query+":"+hyde_answer])
     dense_vector = embedding_result['dense'][0]
     sparse_vector = embedding_result['sparse'][0]
-    # 2. 创建annSearchRequest
+    # 2. 创建AnnSearchRequest列表:  [dense_req, sparse_req]
     ann_reqs = milvus_gateway.create_requests(dense_vector=dense_vector,
                                    sparse_vector=sparse_vector,expr= f"item_name in {item_names}",limit=5*2)
-    # 3. 调用混合检索(设置输出列)
+    # 3. 调用混合检索
     milvus_result = milvus_gateway.hybrid_search(
         collection_name=milvus_gateway.chunk_collection_name,
         reqs=ann_reqs,
@@ -57,11 +57,52 @@ def milvus_search_hyde_entity(hyde_answer:str,rewritten_query:str, item_names:li
             "part"
         ]
     )
+    """
+    [
+        [ 0
+            {
+               id: 1,                       # 主键
+               distance: 0.7,               # 相似度
+               entity:{                     # 返回字段
+                    "chunk_id": 1 
+                    "title":
+                    "parent_title":
+                    "file_title":
+                    "item_name":
+                    "content":
+                    "part":
+               }
+            },
+
+            {
+               id: 2,
+               distance: 0.6,
+               entity:{
+                    "chunk_id": 2
+                    "title":
+                    "parent_title":
+                    "file_title":
+                    "item_name":
+                    "content":
+                    "part":
+               }
+            }
+        ],
+        [ 1
+        ...
+        ]
+    ]
+    """
     # 4. 返回第一层结果
     return milvus_result[0]  if milvus_result and len(milvus_result) > 0 else []
 
 @step_log("normalize_retrieved_chunk")
 def normalize_retrieved_chunk(milvus_response: list[dict]) -> list[dict]:
+    """
+    整理混合检索结构 方便后续使用
+    :param milvus_response:
+    :return:
+    """
     final_list_dict = []
     for milvus_dict in milvus_response:
         # milvus_dict {id , distance , entity : {} }
@@ -86,9 +127,9 @@ def normalize_retrieved_chunk(milvus_response: list[dict]) -> list[dict]:
 @step_log("call_llm_by_rewritten_query")
 def call_llm_by_rewritten_query(rewritten_query) -> str:
     """
-      调用模型生成假设性答案
+    调用模型生成假设性答案
     :param rewritten_query:
-    :return:
+    :return: 结果字符串
     """
     # 1. 获取模型对象 (视觉模型 还是 大语言模型(json模式))
     llm_client = llm_provider.chat()
@@ -118,11 +159,7 @@ def search_by_hyde(state: QueryGraphState):
     rewritten_query, item_names = get_data_and_validates(state)
     # 2. 根据问题获取答案(lm)
     hyde_answer = call_llm_by_rewritten_query(rewritten_query)
-
-    # 2. 进行向量库混合内容检索
+    # 3. 进行向量库混合内容检索
     milvus_response = milvus_search_hyde_entity(hyde_answer,rewritten_query,item_names)
-    # 3. 进行数据格式化处理
-    #  [dict {id , distance , entity : {} } -> 目标格式  {}]
-    final_list_dict =  normalize_retrieved_chunk(milvus_response)
-    # 4. 直接返回数据
-    return final_list_dict
+    # 4. 进行数据格式化处理 并返回
+    return normalize_retrieved_chunk(milvus_response)
