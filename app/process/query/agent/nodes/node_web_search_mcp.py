@@ -1,5 +1,4 @@
 import sys
-
 from app.shared.runtime.logger import node_log
 from app.rag.query.web_search_service import search_by_web
 from app.shared.utils.task_utils import add_done_task, add_running_task
@@ -12,7 +11,7 @@ def node_web_search_mcp(state):
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state["is_stream"])
     web_search_docs = search_by_web(state)
     add_done_task(state["session_id"], sys._getframe().f_code.co_name, state["is_stream"])
-    return {
+    return {    # 增量更新
         "web_search_docs":web_search_docs
     }
 

@@ -1,0 +1,52 @@
+
+整体流程:
+1. 数据校验
+2. 使用 streamableHttp 通信协议调用百炼平台的服务器上的工具
+    使用方式:
+    server = MCPServerStreamableHttp(
+             name = "自定义 服务器的名字",
+             params = {
+                  mcp的链接信息
+                  url : "mcp地址",
+                  headers : {"Authorization" , f"Bearer {token}"},
+                  timeout : 30
+             }
+             cache_tools_list=True,  是否缓存工具
+             max_retry_attempts=3, 重试次数
+     server 链接 .connect()
+     server . 获取工具列表  list_tools()
+     server . 调用工具信息  call_tool(工具名字:str,arguments:{})
+     server . 断开链接内容  cleanup()
+
+    百炼平台联网搜索工具地址
+    https://bailian.console.aliyun.com/cn-beijing/?spm=a2c4g.11186623.0.0.5f885389KrrOsZ&tab=mcp#/mcp-market/detail/WebSearch
+    测试 query: 简要推荐深圳美食  count: 2 返回数据结构:
+        {
+          "isError": false,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"pages\":[{\"title\":\"深圳自助餐美食推荐,万德诺富特酒店性价比直接拉满!\",\"url\":\"https://cj.sina.com.cn/articles/view/1215361752/4870f2d800103gelw\",\"snippet\":\"深圳自助餐美食推荐...给生活加点糖\",\"hostname\":\"新浪网\",\"hostlogo\":\"https://mbs1.bdstatic.com/searchbox/mappconsole/image/20220307/88eb511c-5c51-448a-a9b5-df6b24cda8c7.png\"},{\"title\":\"深圳周末五星自助餐推荐,南山希尔顿逸林酒店自助餐\",\"url\":\"https://cj.sina.com.cn/articles/view/1215361752/4870f2d800103gqci\",\"snippet\":\"深圳周末五星自助餐推荐...老餮必食 4+\",\"hostname\":\"新浪网\",\"hostlogo\":\"https://mbs1.bdstatic.com/searchbox/mappconsole/image/20220307/88eb511c-5c51-448a-a9b5-df6b24cda8c7.png\"}],\"request_id\":\"f35219a8-de6f-43c9-bf66-c580229577d4\",\"tools\":[],\"status\":0}"
+            }
+          ]
+        }
+    其他信息 如api地址:
+        {
+          "mcpServers": {
+            "WebSearch": {
+              "type": "streamableHttp",
+              "description": "基于通义实验室 Text-Embedding，GTE-reRank，Query 改写，搜索判定等多种检索模型及语义理解，串接专业搜索工程框架及各类型实时信息检索工具，提供实时互联网全栈信息检索，提升 LLM 回答准确性及时效性。",
+              "isActive": true,
+              "name": "AliyunBailianMCP_WebSearch",
+              "baseUrl": "https://dashscope.aliyuncs.com/api/v1/mcps/WebSearch/mcp",    # 配置到.env方便调用和修改
+              "headers": {
+                "Authorization": "Bearer ${DASHSCOPE_API_KEY}"
+              }
+            }
+          }
+        }
+
+3. 结果解析  增量更新
+    json.loads() 处理的是 字符串（string）
+    json.load() 处理的是 文件对象（file）
+    使用loads() 处理结果
