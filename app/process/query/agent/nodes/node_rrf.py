@@ -1,6 +1,4 @@
 import sys
-import time
-
 from app.shared.runtime.logger import node_log
 from app.rag.query.rrf_service import fuse_by_rrf
 from app.shared.utils.task_utils import add_done_task, add_running_task
@@ -9,10 +7,10 @@ from app.shared.utils.task_utils import add_done_task, add_running_task
 def node_rrf(state):
     """
     节点功能：Reciprocal Rank Fusion
-    将多路召回的结果（向量、HyDE、Web）进行加权融合排序。
+    将多路召回的结果（向量、HyDE、Web）进行加权融合排序
+    实际rrf中不融合web 提前写入全局state 方便后续rerank使用
     """
     add_running_task(state["session_id"], sys._getframe().f_code.co_name, state.get("is_stream"))
-    time.sleep(0.5)
     state = fuse_by_rrf(state)
     add_done_task(state['session_id'], sys._getframe().f_code.co_name, state.get("is_stream"))
     return state

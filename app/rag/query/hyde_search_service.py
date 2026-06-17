@@ -131,7 +131,7 @@ def call_llm_by_rewritten_query(rewritten_query) -> str:
     :param rewritten_query:
     :return: 结果字符串
     """
-    # 1. 获取模型对象 (视觉模型 还是 大语言模型(json模式))
+    # 1. 获取模型对象
     llm_client = llm_provider.chat()
     # 2. 加载和封装提示词
     prompt_text =  load_prompt("hyde_prompt",rewritten_query = rewritten_query)
