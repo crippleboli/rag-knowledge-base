@@ -1,5 +1,4 @@
 import sys
-
 from app.shared.runtime.logger import node_log
 from app.rag.query.answer_service import generate_answer
 from app.shared.utils.task_utils import add_done_task, add_running_task

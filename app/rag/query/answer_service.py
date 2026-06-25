@@ -1,6 +1,4 @@
 import re
-
-from app.infra.persistence.history_repository import history_repository
 from app.process.query.agent.state import QueryGraphState
 from app.shared.runtime.load_prompt import load_prompt
 from app.shared.utils.task_utils import add_done_task,add_running_task,push_to_session
@@ -8,40 +6,33 @@ from app.shared.utils.sse_utils import SSEEvent
 from app.shared.runtime.logger import logger
 from app.infra.persistence.history_repository import history_repository
 from app.infra.llm.providers import llm_provider
-import time
-import sys
 
 
 def check_state_has_answer(state):
     """
-    检测是否有answer!
-      有返回对应的字符串
+    检测是否有answer
+    判断是主体识别相似度太低导致直接输出提示信息 还是正常生成输出流程
     :param state:
     :return:
     """
     answer = state.get("answer")
     if not answer:
-        logger.info(f"没有answer,证明有明确的item_names正常返回结果!!")
+        logger.info(f"没有answer,item_names与库中itemnames集合识别后相似度正常")
         return False
-    # 我们就的给前端返回数据
-    # is_stream = True -> 打字机模型 -> state (final)
-    # is_stream = False -> answer -> state
-    is_stream = state.get("is_stream", False)
 
+    # 输出主体识别相似度太低的提示信息
+    is_stream = state.get("is_stream", False)
     if is_stream:
-        # 流式返回
-        # answer "A B C D E F G "
         for ch in answer:
             push_to_session(
                 state.get("session_id") , SSEEvent.DELTA , {"delta":ch}
             )
-            #time.sleep(0.06)
     return True
 
 
 def get_data_and_validates(state):
     """
-      获取数据并且校验
+    获取数据并且校验
     :param state:
     :return:
     """
@@ -49,10 +40,20 @@ def get_data_and_validates(state):
     item_names = state.get("item_names",[])
     rewritten_query = state.get("rewritten_query")
 
-    if len(reranked_docs) == 0 or len(item_names) == 0 or not rewritten_query:
-        logger.info(f"没有reranker_docs,item_names,rewritten_query,请检查参数!!")
-        raise ValueError("没有reranker_docs,item_names,rewritten_query,请检查参数!!")
+    if len(reranked_docs) == 0:
+        logger.error("reranked_docs 为空！前置检索或 Rerank 节点未成功召回素材")
+        raise ValueError("参数缺失错误：reranked_docs 不能为空列表")
 
+
+    if len(item_names) == 0:
+        logger.error("item_names 为空！未绑定任何有效的商品/设备主体")
+        raise ValueError("参数缺失错误：item_names 不能为空列表")
+
+    if not rewritten_query:
+        logger.error("rewritten_query 为空或None！用户问题在流转中丢失")
+        raise ValueError("参数缺失错误：rewritten_query 不能为空或None")
+
+    # 当前对话的10条历史记录
     history = history_repository.list_recent(state.get("session_id"),limit=10)
 
     return reranked_docs,history,item_names,rewritten_query
@@ -60,7 +61,7 @@ def get_data_and_validates(state):
 
 def load_prompt_text(reranker_docs, history, item_names, rewritten_query) -> str:
     """
-    加载提示词文件! 拼接提示词!
+    加载提示词文件 拼接提示词
     :param reranker_docs: -> context
     :param history: -> 聊天记录
     :param item_names: ->  关联主体
@@ -112,7 +113,7 @@ def call_llm_generate(answer_prompt_text, state):
     # 2. 判断是否是流式调用
     is_stream = state.get("is_stream", False)
     if is_stream:
-        # 一段一段文本返回
+       # 流式返回
         stream = llm_client.stream(answer_prompt_text)
         for chunk in stream:
             # 当前段
@@ -130,7 +131,7 @@ def call_llm_generate(answer_prompt_text, state):
 
 def extract_image_urls(reranker_docs, state):
     """
-     提取图片 url text 装到列表! 放到state
+     提取图片 url text 装到列表 放到state
     :param reranker_docs:
     :param state:
     :return:
@@ -179,9 +180,9 @@ def generate_answer(state: QueryGraphState) -> QueryGraphState:
     """
     # 1. 判断是否有answer内容并且返回对应的状态
     has_answer = check_state_has_answer(state)
-    # 2. 如果没有结果,才调用模型进行答案生成
+    # 2. answer不存在 调用模型进行答案生成
     if not has_answer:
-        # 3. 没有结果,获取并且校验参数
+        # 3. 获取并且校验参数
         reranker_docs,history,item_names,rewritten_query = get_data_and_validates(state)
         # 4. 拼接提示词的上下文,加载外部的提示词文件
         answer_prompt_text = load_prompt_text(reranker_docs,history,item_names,rewritten_query)
